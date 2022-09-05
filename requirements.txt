@@ -1,0 +1,4 @@
+Django
+pandas
+selenium
+webdriver-manager
