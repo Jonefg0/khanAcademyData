@@ -1,7 +1,8 @@
 # khanAcademyData
 
 Descripción:
-Script para extraer datos de khan Academy
+Aplicación web que permite la actualización y visualización de datos sobre khan Academy 
+Acción STEM 2022
 
 Django y Selenium
 
