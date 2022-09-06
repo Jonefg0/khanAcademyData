@@ -1,5 +1,4 @@
 from datetime import date, datetime
-import locale
 
 
 ultima_fecha = date(2022,8,26)
@@ -10,6 +9,7 @@ print("diferencia entre fechas:", dif)
 
 date_string = "21 June, 2018"
 print("date_string =", date_string)
+
 
 
 def date_to_string(date:datetime):
@@ -32,24 +32,67 @@ def date_to_string(date:datetime):
     string_date = str_month + ' ' + str(date.day) + ', ' + str(date.year)
     return string_date
 
+def string_to_date(string_date:str):
+    m = {
+        'enero':'1',
+        'febrero':'2',
+        'marzo':'3',
+        'abril':'4',
+        'mayo':'5',
+        'junio':'6',
+        'julio':'7',
+        'agosto':'8',
+        'septiembre':'9',
+        'octubre':'10',
+        'noviembre':'11',
+        'diciembre':'12',
+    }
+    split_date = string_date.split(' ')
+    print("split_date", split_date)
+    day = int(str(split_date[1])[0:-1])
+    month = int(m[split_date[0]])
+    year = int(split_date[2])
 
+    return date(year,month,day)
+
+    
 def update_verfification(last_date, actual_date:datetime):
-    if (type(last_date) == datetime):
-        if (actual_date > last_date):
-            delta = actual_date - last_date
+    print("last_date type: ", type(last_date))
+    if (str(type(last_date)) ==  "<class 'datetime.date'>"):
+        dates = [date_to_string(last_date), date_to_string(actual_date)]
     else:
         #arreglo desde inicio de cursos, se restan 2 meses para no contar enero y febrero
-        months = ["enero","febrero","marzo","abril","mayo","junio","julio","septiembre","octubre","noviembre","diciembre"]
+        actual_month = actual_date.month 
+        months = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
         days = [31,28,31,30,31,30,31,31,30,31,30,31]
         year = actual_date.year
         dates = []
-        for j in range(len(months)-2):
-            i = 1
-            while (i <days[j]):
-                dates.append(months[j+2]+" "+str(i)+", "+ str(year))
+        first_time = True
+        initial_month = 2 #0: enero, 1:febrero, 2: marzo, 3: abril, 4: mayo,....
+        actual_month = actual_date.month 
+
+        for j in range((actual_month - initial_month)):#partir desde mes de inicio
+            real_month = j + initial_month
+            if first_time: #primer viernes del mes de inicio
+                i = 4
+                first_time = False
+            else :
+                i = 7 - (days[real_month - 1] - (i)) #primer viernes del mes
+                #print("el siguiente mes parte en i",i)
+            while (i <=days[real_month]):
+                if (real_month == (actual_month-1)):
+                    if i >=  actual_date.day:
+                        break
+                dates.append(months[j+initial_month]+" "+str(i)+", "+ str(year))#parte desde mes de inicio
                 i=i+7
+                #print("i quedó en:", i)
+            i=i-7
+    return dates
 
 
+
+
+print(string_to_date("agosto 8, 2022"))
 
 
 
