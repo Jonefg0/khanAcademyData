@@ -22,6 +22,7 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_PORT = os.environ.get("DB_PORT")
 DB_USER = os.environ.get("DB_USER")
 DB_TABLE = os.environ.get("DB_TABLE")
+COURSES = os.environ.get('COURSES')
 
 def verification(lista):
     sum = 0
@@ -184,8 +185,9 @@ def run_script():
     # driver.get("https://www.khanacademy.org/teacher/class/SNFD6RAV/overview/activity")
     # time.sleep(4)
 
-    #cursos = ["PUFMSN2Y","B8R2QYTZ","SK8AVS6T","SNFD6RAV","HGCVH5GU","M5NC6Q59","8RN7Y26W","4BDG3KYZ","PE4HKFPJ","FUDFPMJP","PR8XE9NN","KZFDPGFC","9A52ZEQY","WVHHCPNT","Z5GBVS8T","EUX423PU","VFQDGQ7C"]
-    cursos = ["PUFMSN2Y"]
+    
+    #cursos = ["PUFMSN2Y","SK8AVS6T","SNFD6RAV","HGCVH5GU","M5NC6Q59","8RN7Y26W","4BDG3KYZ","PE4HKFPJ","FUDFPMJP","KZFDPGFC","9A52ZEQY","WVHHCPNT","Z5GBVS8T","EUX423PU","VFQDGQ7C","UG64XJC4","XJ9F3A76","2HU545S9"]
+    cursos = COURSES.split(',')
     table = []
     # stand_by :
     fecha = datetime.today()
@@ -288,4 +290,3 @@ def run_script():
     sendData(df)
     df.to_excel('datos/output_'+str(fecha)+'.xlsx')
     driver.close()
-
