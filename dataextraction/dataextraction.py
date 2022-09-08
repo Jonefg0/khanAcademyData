@@ -1,5 +1,3 @@
-from distutils.log import error
-from warnings import catch_warnings
 from selenium import webdriver
 import pandas as pd
 import time
@@ -51,8 +49,8 @@ def create_connection():
     )
 
 
-def sendData():
-    df = pd.read_excel('datos/output_'+str(date.today())+'.xlsx')
+def sendData(df):
+    #df = pd.read_excel('datos/output_'+str(date.today())+'.xlsx')
 
     for i in range(0, len(df)):
         con = create_connection()
@@ -166,7 +164,7 @@ def run_script():
     options = webdriver.ChromeOptions()
     options.add_argument('--start-maximized')
     options.add_argument('--disable-extensions')
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
 
     #driver = webdriver.Chrome(driver_path, chrome_options=options)
 
@@ -225,9 +223,9 @@ def run_script():
                 try:
                     driver.find_element(
                         By.XPATH, '//*[@id="start-date-field"]').send_keys(Keys.BACKSPACE)
-                except (error):
-                    print(error)
-
+                except:
+                    print("error")
+                    
             driver.find_element(
                 By.XPATH, '//*[@id="start-date-field"]').send_keys(str(fechas[k]))
 
@@ -276,10 +274,7 @@ def run_script():
             df = df.append({'codigo_escuela': escuela, 'numero_estudiantes': countNonzeros(df4['TOTAL DE MINUTOS DE APRENDIZAJE']), 'fecha_script': fecha, 'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin, 'numero_semana': k +
                            last_week_number() + 1, 'suma_minutos': sumaMinutos, 'skills_mejoradas': sumaSkills, 'suma_skill_sin_avance': sumaWOProgress, 'maximo_ejercicios': maxEjercicio, 'maximo_skills': maxSkills}, ignore_index=True)
 
-    df.to_excel('datos/output_'+str(date.today())+'.xlsx')
-    time.sleep(4)
-    sendData()
+    sendData(df)
+    df.to_excel('datos/output_'+str(fecha)+'.xlsx')
     driver.close()
 
-
-run_script()
