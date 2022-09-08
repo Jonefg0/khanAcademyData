@@ -157,6 +157,19 @@ def last_week_number():
     else:
         return int(aux[0])
 
+def last_week_date():
+    con = create_connection()
+    cur = con.cursor()
+    cur.execute("SELECT fecha_fin,max(numero_semana) FROM logros")
+    con.commit()
+    con.close()
+    aux = cur.fetchone()
+
+    if (aux[0] == None):
+        return False
+    else:
+        return (aux[0])
+
 
 def run_script():
 
@@ -180,7 +193,7 @@ def run_script():
     fecha = datetime.today()
     first_row = True
     item = 0
-    fechas = update_verfification(date(2022, 8, 26), date.today())
+    fechas = update_verfification(last_week_date(), date.today())
     columnas = ['codigo_escuela', 'numero_estudiantes', 'fecha_script', 'fecha_inicio', 'fecha_fin', 'numero_semana',
                 'suma_minutos', 'skills_mejoradas', 'suma_skill_sin_avance', 'maximo_ejercicios', 'maximo_skills']
     df = pd.DataFrame(columns=columnas)
