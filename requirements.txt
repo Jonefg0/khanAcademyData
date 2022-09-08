@@ -2,3 +2,5 @@ Django
 pandas
 selenium
 webdriver-manager
+pymysql
+python-dotenv
