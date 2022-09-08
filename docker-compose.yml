@@ -1,14 +1,7 @@
 version: "2"
 services:
-  django:
-    container_name: django_server
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: docker_tutorial_django
-    stdin_open: true
+  khanapp:
+    image: khandata
     tty: true
-    volumes:
-      - .:/var/www/myproject
     ports:
-      - "8000:8000"
+      - "8001:8000"
