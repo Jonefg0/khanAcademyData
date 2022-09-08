@@ -21,7 +21,7 @@ DB_NAME = os.environ.get("DB_NAME")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_PORT = os.environ.get("DB_PORT")
 DB_USER = os.environ.get("DB_USER")
-
+DB_TABLE = os.environ.get("DB_TABLE")
 
 def verification(lista):
     sum = 0
@@ -55,7 +55,7 @@ def sendData(df):
     for i in range(0, len(df)):
         con = create_connection()
         cur = con.cursor()
-        cur.execute("INSERT INTO `logros` (codigo_escuela,numero_estudiantes,fecha_script,fecha_inicio,fecha_fin,numero_semana,suma_minutos,skills_mejoradas,suma_skill_sin_avance,maximo_ejercicios,maximo_skills) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        cur.execute("INSERT INTO `"+DB_TABLE+"` (codigo_escuela,numero_estudiantes,fecha_script,fecha_inicio,fecha_fin,numero_semana,suma_minutos,skills_mejoradas,suma_skill_sin_avance,maximo_ejercicios,maximo_skills) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (df['codigo_escuela'][i], df['numero_estudiantes'][i], df['fecha_script'][i], df['fecha_inicio'][i], df['fecha_fin'][i], df['numero_semana'][i], df['suma_minutos'][i], df['skills_mejoradas'][i], df['suma_skill_sin_avance'][i], df['maximo_ejercicios'][i], df['maximo_skills'][i]))
         con.commit()
         con.close()
@@ -98,7 +98,7 @@ def string_to_date(string_date: str):
         'diciembre': '12',
     }
     split_date = string_date.split(' ')
-    print("split_date", split_date)
+
     day = int(str(split_date[1])[0:-1])
     month = int(m[split_date[0]])
     year = int(split_date[2])
@@ -107,7 +107,6 @@ def string_to_date(string_date: str):
 
 
 def update_verfification(last_date, actual_date: datetime):
-    print("last_date type: ", type(last_date))
     if (str(type(last_date)) == "<class 'datetime.date'>"):
         dates = [date_to_string(last_date), date_to_string(actual_date)]
     else:
@@ -130,7 +129,6 @@ def update_verfification(last_date, actual_date: datetime):
                 first_time = False
             else:
                 i = 7 - (days[real_month - 1] - (i))  # primer viernes del mes
-                #print("el siguiente mes parte en i",i)
             while (i <= days[real_month]):
                 if (real_month == (actual_month-1)):
                     if i >= actual_date.day:
@@ -147,7 +145,7 @@ def update_verfification(last_date, actual_date: datetime):
 def last_week_number():
     con = create_connection()
     cur = con.cursor()
-    cur.execute("SELECT MAX(numero_semana) FROM logros")
+    cur.execute("SELECT MAX(numero_semana) FROM "+DB_TABLE+"")
     con.commit()
     con.close()
     aux = cur.fetchone()
@@ -160,7 +158,7 @@ def last_week_number():
 def last_week_date():
     con = create_connection()
     cur = con.cursor()
-    cur.execute("SELECT fecha_fin,max(numero_semana) FROM logros")
+    cur.execute("SELECT fecha_fin,max(numero_semana) FROM "+DB_TABLE+"")
     con.commit()
     con.close()
     aux = cur.fetchone()
@@ -177,7 +175,7 @@ def run_script():
     options = webdriver.ChromeOptions()
     options.add_argument('--start-maximized')
     options.add_argument('--disable-extensions')
-    #options.add_argument('--headless')
+    options.add_argument('--headless')
 
     #driver = webdriver.Chrome(driver_path, chrome_options=options)
 
