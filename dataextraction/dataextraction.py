@@ -22,6 +22,7 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_PORT = os.environ.get("DB_PORT")
 DB_USER = os.environ.get("DB_USER")
 DB_TABLE = os.environ.get("DB_TABLE")
+DB_STUDENT_TABLE = os.environ.get("DB_STUDENT_TABLE")
 COURSES = os.environ.get('COURSES')
 username = os.environ.get('BROWSERSTACK_USERNAME')
 accessKey = os.environ.get('BROWSERSTACK_ACCESS_KEY')
@@ -52,9 +53,16 @@ def create_connection():
     )
 
 
-def sendData(df):
-    #df = pd.read_excel('datos/output_'+str(date.today())+'.xlsx')
+def sendStudentData(df):
+    for i in range(0, len(df)):
+        con = create_connection()
+        cur = con.cursor()
+        cur.execute("INSERT INTO `"+DB_STUDENT_TABLE+"` (codigo_escuela, codigo_curso, fecha_script, fecha_inicio, fecha_fin, numero_semana, nombre_estudiante, total_minutos, habilidades_mejoradas, habilidades_sin_avance ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (df['escuela'][i],df['curso'][i],df['fecha_script'][i], df['fecha_inicio'][i], df['fecha_fin'][i], df['numero_semana'][i],df['ESTUDIANTE'][i],df['TOTAL DE MINUTOS DE APRENDIZAJE'][i],df['HABILIDADES MEJORADAS'][i],df['HABILIDADES SIN AVANCE'][i] ))
+        con.commit()
+        con.close()
 
+def sendData(df):
     for i in range(0, len(df)):
         con = create_connection()
         cur = con.cursor()
@@ -161,13 +169,13 @@ def last_week_number():
 def last_week_date():
     con = create_connection()
     cur = con.cursor()
-    cur.execute("SELECT fecha_fin,max(numero_semana) FROM "+DB_TABLE+"")
+    cur.execute("SELECT max(fecha_fin) FROM "+DB_TABLE+"")
     con.commit()
     con.close()
     aux = cur.fetchone()
 
     if (aux[0] == None):
-        return False
+        return ""
     else:
         return (aux[0])
 
@@ -213,11 +221,14 @@ def run_script():
         # wdw(driver,10).until(EC.element_to_be_clickable(By.XPATH,'//*[@id="class-shell"]/div/div[1]/div[1]/div[1]/div/h4'))
         # driver.find_element(By.XPATH,'')
 
-        escuela = wdw(driver, 10).until(EC.presence_of_element_located(
+        codigo_escuela = wdw(driver, 10).until(EC.presence_of_element_located(
             (By.XPATH, '//*[@id="class-shell"]/div/div[1]/div[1]/div[1]/div/h4'))).text
+        escuela_y_curso = codigo_escuela.split(':')[0]
+        escuela_curso_array = escuela_y_curso.split('-')
+        escuela = escuela_curso_array[0]
+        curso = escuela_curso_array[1]+escuela_curso_array[2]
 
         #escuela = driver.find_element(By.XPATH,'//*[@id="class-shell"]/div/div[1]/div[1]/div[1]/div/h4').text
-        print("escuela:", escuela)
 
         for k in range(0, len(fechas)-1):
             if (first_row):
@@ -228,7 +239,8 @@ def run_script():
                 By.XPATH, '//*[@id="class-shell"]/div/div[2]/div[3]/div[2]/div[1]/div/div/button').click()
             driver.find_element(
                 By.XPATH, '/html/body/div[2]/div/div/div[' + str(item)+']').click()
-
+            fecha_inicio = string_to_date(fechas[k])
+            fecha_fin = string_to_date(fechas[k+1])
             wdw(driver, 10).until(EC.presence_of_element_located(
                 (By.XPATH, '//*[@id="start-date-field"]')))
             time.sleep(2)
@@ -263,13 +275,27 @@ def run_script():
                 (By.XPATH, '//*[@id="class-shell"]/div/div[2]/div[3]/div[2]/div[3]/div/div/div/div'))).text
             tab = table.split("\n")
             columnas = [tab[0], tab[1], tab[2], tab[3]]
+            columnas_df = ['escuela','curso','fecha_script','fecha_inicio','fecha_fin','numero_semana',tab[0], tab[1], tab[2], tab[3]]
+            df_estudiantes = pd.DataFrame(columns=columnas_df)
             df4 = pd.DataFrame(columns=columnas)
             output = [tab[i:i + 4] for i in range(4, len(tab), 4)]
-
+            output_aux = output
             first_row = False
             if verification(output):
                 for j in range(0, len(output)):
                     df4.loc[j] = output[j]
+                    print("output", output[j])
+                    output_aux[j].insert(0,escuela)
+                    output_aux[j].insert(1,curso)
+                    output_aux[j].insert(2,fecha)
+                    output_aux[j].insert(3,fecha_inicio)
+                    output_aux[j].insert(4,fecha_fin)
+                    output_aux[j].insert(5,last_week_number() + 1)
+                print("output_aux", output_aux)
+                for j in range(0, len(output_aux)):
+                    df_estudiantes.loc[j] = output_aux[j]
+                print("df_est",df_estudiantes)
+                sendStudentData(df_estudiantes)
                 sumaMinutos = df4['TOTAL DE MINUTOS DE APRENDIZAJE'].astype(
                     int).sum()
                 maxEjercicio = df4['TOTAL DE MINUTOS DE APRENDIZAJE'].max()
@@ -277,14 +303,13 @@ def run_script():
                 sumaSkills = df4['HABILIDADES MEJORADAS'].astype(int).sum()
                 sumaWOProgress = df4['HABILIDADES SIN AVANCE'].astype(
                     int).sum()
-                fecha_inicio = string_to_date(fechas[k])
-                fecha_fin = string_to_date(fechas[k+1])
+                
                 time.sleep(2)
             else:
                 sumaMinutos = 0
                 sumaSkills = 0
                 sumaWOProgress = 0
-            df = df.append({'codigo_escuela': escuela, 'numero_estudiantes': countNonzeros(df4['TOTAL DE MINUTOS DE APRENDIZAJE']), 'fecha_script': fecha, 'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin, 'numero_semana': k +
+            df = df.append({'codigo_escuela': escuela_y_curso, 'numero_estudiantes': countNonzeros(df4['TOTAL DE MINUTOS DE APRENDIZAJE']), 'fecha_script': fecha, 'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin, 'numero_semana': k +
                            last_week_number() + 1, 'suma_minutos': sumaMinutos, 'skills_mejoradas': sumaSkills, 'suma_skill_sin_avance': sumaWOProgress, 'maximo_ejercicios': maxEjercicio, 'maximo_skills': maxSkills}, ignore_index=True)
 
     sendData(df)
