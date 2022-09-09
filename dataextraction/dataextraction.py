@@ -23,6 +23,8 @@ DB_PORT = os.environ.get("DB_PORT")
 DB_USER = os.environ.get("DB_USER")
 DB_TABLE = os.environ.get("DB_TABLE")
 COURSES = os.environ.get('COURSES')
+username = os.environ.get('BROWSERSTACK_USERNAME')
+accessKey = os.environ.get('BROWSERSTACK_ACCESS_KEY')
 
 def verification(lista):
     sum = 0
@@ -172,21 +174,19 @@ def last_week_date():
 
 def run_script():
 
-    # def extractdata():
-    options = webdriver.ChromeOptions()
-    options.add_argument('--start-maximized')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--headless')
+    desired_cap = {
+    "os" : "Windows",
+    "os_version" : "10",
+    "browser" : "Chrome",
+    "browser_version" : "latest",
+    'bstack:options' : {
+        "resolution" : "1920x1080",
 
-    #driver = webdriver.Chrome(driver_path, chrome_options=options)
+    },
+    }
+    driver = webdriver.Remote(command_executor='https://'+username+':'+accessKey+'@hub-cloud.browserstack.com/wd/hub',desired_capabilities=desired_cap)
+    driver.maximize_window()
 
-    driver = webdriver.Chrome(
-        ChromeDriverManager().install(), chrome_options=options)
-    # driver.get("https://www.khanacademy.org/teacher/class/SNFD6RAV/overview/activity")
-    # time.sleep(4)
-
-    
-    #cursos = ["PUFMSN2Y","SK8AVS6T","SNFD6RAV","HGCVH5GU","M5NC6Q59","8RN7Y26W","4BDG3KYZ","PE4HKFPJ","FUDFPMJP","KZFDPGFC","9A52ZEQY","WVHHCPNT","Z5GBVS8T","EUX423PU","VFQDGQ7C","UG64XJC4","XJ9F3A76","2HU545S9"]
     cursos = COURSES.split(',')
     table = []
     # stand_by :
@@ -288,5 +288,5 @@ def run_script():
                            last_week_number() + 1, 'suma_minutos': sumaMinutos, 'skills_mejoradas': sumaSkills, 'suma_skill_sin_avance': sumaWOProgress, 'maximo_ejercicios': maxEjercicio, 'maximo_skills': maxSkills}, ignore_index=True)
 
     sendData(df)
-    df.to_excel('datos/output_'+str(fecha)+'.xlsx')
+    df.to_excel('datos/output_'+str(date.today())+'.xlsx')
     driver.close()
