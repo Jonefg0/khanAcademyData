@@ -162,7 +162,7 @@ def last_week_number():
     aux = cur.fetchone()
 
     if (aux[0] == None):
-        return 1
+        return 0
     else:
         return int(aux[0])
 
