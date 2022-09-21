@@ -58,7 +58,7 @@ def sendStudentData(df):
         con = create_connection()
         cur = con.cursor()
         cur.execute("INSERT INTO `"+DB_STUDENT_TABLE+"` (codigo_escuela, codigo_curso, fecha_script, fecha_inicio, fecha_fin, numero_semana, nombre_estudiante, total_minutos, habilidades_mejoradas, habilidades_sin_avance ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                    (df['escuela'][i],df['curso'][i],df['fecha_script'][i], df['fecha_inicio'][i], df['fecha_fin'][i], df['numero_semana'][i],df['ESTUDIANTE'][i],df['TOTAL DE MINUTOS DE APRENDIZAJE'][i],df['HABILIDADES MEJORADAS'][i],df['HABILIDADES SIN AVANCE'][i] ))
+                    (df['escuela'][i], df['curso'][i], df['fecha_script'][i], df['fecha_inicio'][i], df['fecha_fin'][i], df['numero_semana'][i], df['ESTUDIANTE'][i], df['TOTAL DE MINUTOS DE APRENDIZAJE'][i], df['HABILIDADES MEJORADAS'][i], df['HABILIDADES SIN AVANCE'][i]))
         con.commit()
         con.close()
 
@@ -117,40 +117,68 @@ def string_to_date(string_date: str):
     return date(year, month, day)
 
 
-def update_verfification(last_date, actual_date: datetime):
-    if (str(type(last_date)) == "<class 'datetime.date'>"):
-        dates = [date_to_string(last_date), date_to_string(actual_date)]
-    else:
-        # arreglo desde inicio de cursos, se restan 2 meses para no contar enero y febrero
-        actual_month = actual_date.month
-        months = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
-                  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-        days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        year = actual_date.year
-        dates = []
-        first_time = True
-        # 0: enero, 1:febrero, 2: marzo, 3: abril, 4: mayo,....
-        initial_month = 2
-        actual_month = actual_date.month
+def update_verfification(last_date, actual_date: datetime, initial_month):
+    dates_w = []  # wednesday in year
+    dates_m = []  # mondays in year
+    actual_month = actual_date.month
+    months = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+              "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+    days = [31, 28, 31, 30, 31, 30, 31, 31, 30,
+            31, 30, 31]  # duración de los meses
+    year = actual_date.year
+    first_time = True
+    # 0: enero, 1:febrero, 2: marzo, 3: abril, 4: mayo,....
+    actual_month = actual_date.month
 
-        for j in range((actual_month - initial_month)):  # partir desde mes de inicio
-            real_month = j + initial_month
-            if first_time:  # primer viernes del mes de inicio
-                i = 4
-                first_time = False
-            else:
-                i = 7 - (days[real_month - 1] - (i))  # primer viernes del mes
-            while (i <= days[real_month]):
-                if (real_month == (actual_month-1)):
-                    if i >= actual_date.day:
-                        break
-                # parte desde mes de inicio
-                dates.append(months[j+initial_month] +
-                             " "+str(i)+", " + str(year))
-                i = i+7
-                #print("i quedó en:", i)
-            i = i-7
-    return dates
+    for j in range((actual_month - initial_month)):  # partir desde mes de inicio
+        real_month = j + initial_month
+        if first_time:  # primer viernes del mes de inicio
+            i = 11
+            first_time = False
+        else:
+            i = 7 - (days[real_month - 1] - (i))  # primer viernes del mes
+        while (i <= days[real_month]):
+            if (real_month == (actual_month-1)):
+                if i >= actual_date.day:
+                    break
+            # parte desde mes de inicio
+            dates_w.append(months[j+initial_month] +
+                           " "+str(i)+", " + str(year))
+            i = i+7
+            #print("i quedó en:", i)
+        i = i-7
+    first_time = True
+    for k in range((actual_month - initial_month)):
+        real_month = k + initial_month
+        if first_time:  # primer lunes del año
+            i = 7
+            first_time = False
+        else:
+            i = 7 - (days[real_month - 1] - (i))  # primer lunes del mes
+        while (i <= days[real_month]):
+            if (real_month == (actual_month-1)):
+                if i > actual_date.day:
+                    break
+            # parte desde mes de inicio
+            dates_m.append(months[k+initial_month] +
+                           " "+str(i)+", " + str(year))
+            i = i+7
+            #print("i quedó en:", i)
+        i = i-7
+    dates_m = dates_m[:-1]
+    if (str(type(last_date)) == "<class 'datetime.date'>"):
+        diff = actual_date-last_date
+        if (diff.days < 7):  # just last week data
+            return [dates_m[-1:], dates_w[-1:]]
+        else:
+            week_count = 7
+            count = 0
+            while (week_count <= diff.days):
+                week_count += 7
+                count += 1
+            return [dates_m[-count:], dates_w[-count:]]
+    else:
+        return [dates_m, dates_w]
 
 
 def last_week_number():
@@ -180,20 +208,37 @@ def last_week_date():
         return (aux[0])
 
 
+def browserStack_driver():
+    desired_cap = {
+        "os": "Windows",
+        "os_version": "10",
+        "browser": "Chrome",
+        "browser_version": "latest",
+        'bstack:options': {
+            "resolution": "1920x1080",
+
+        },
+    }
+
+    return webdriver.Remote(command_executor='https://'+username+':'+accessKey+'@hub-cloud.browserstack.com/wd/hub', desired_capabilities=desired_cap)
+
+
+def local_driver():
+    options = webdriver.ChromeOptions()
+    options.add_argument('--start-maximized')
+    options.add_argument('--disable-extensions')
+    # options.add_argument('--headless')
+
+    #driver = webdriver.Chrome(driver_path, chrome_options=options)
+
+    return webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
+
+
 def run_script():
 
-    desired_cap = {
-    "os" : "Windows",
-    "os_version" : "10",
-    "browser" : "Chrome",
-    "browser_version" : "latest",
-    'bstack:options' : {
-        "resolution" : "1920x1080",
-
-    },
-    }
-    driver = webdriver.Remote(command_executor='https://'+username+':'+accessKey+'@hub-cloud.browserstack.com/wd/hub',desired_capabilities=desired_cap)
+    driver = local_driver()
     driver.maximize_window()
+    lwn = last_week_number()
 
     cursos = COURSES.split(',')
     table = []
@@ -201,14 +246,16 @@ def run_script():
     fecha = datetime.today()
     first_row = True
     item = 0
-    fechas = update_verfification(last_week_date(), date.today())
+    fechas_l, fechas_v = update_verfification(last_week_date(), date.today(), 2)
     columnas = ['codigo_escuela', 'numero_estudiantes', 'fecha_script', 'fecha_inicio', 'fecha_fin', 'numero_semana',
                 'suma_minutos', 'skills_mejoradas', 'suma_skill_sin_avance', 'maximo_ejercicios', 'maximo_skills']
     df = pd.DataFrame(columns=columnas)
 
     for i in cursos:
+        df_actual = pd.DataFrame(columns=columnas)
         driver.get("https://www.khanacademy.org/teacher/class/" +
                    i+"/overview/activity")
+        time.sleep(2)
         if (first_row):
             driver.find_element(
                 By.XPATH, '//*[@id="uid-login-form-0-wb-id-identifier-field"]').send_keys(USER)
@@ -217,10 +264,10 @@ def run_script():
             driver.find_element(
                 By.XPATH, '//*[@id="app-shell-root"]/div/main/div[2]/div/div[3]/section[2]/div/div/form/button').click()
 
-        time.sleep(2)
+        time.sleep(3)
         # wdw(driver,10).until(EC.element_to_be_clickable(By.XPATH,'//*[@id="class-shell"]/div/div[1]/div[1]/div[1]/div/h4'))
         # driver.find_element(By.XPATH,'')
-
+        print("INICIANDO SCRAPING")
         codigo_escuela = wdw(driver, 10).until(EC.presence_of_element_located(
             (By.XPATH, '//*[@id="class-shell"]/div/div[1]/div[1]/div[1]/div/h4'))).text
         escuela_y_curso = codigo_escuela.split(':')[0]
@@ -229,8 +276,8 @@ def run_script():
         curso = escuela_curso_array[1]+escuela_curso_array[2]
 
         #escuela = driver.find_element(By.XPATH,'//*[@id="class-shell"]/div/div[1]/div[1]/div[1]/div/h4').text
-
-        for k in range(0, len(fechas)-1):
+        time.sleep(5)
+        for k in range(0, len(fechas_v)):
             if (first_row):
                 item = 5
             else:
@@ -239,8 +286,8 @@ def run_script():
                 By.XPATH, '//*[@id="class-shell"]/div/div[2]/div[3]/div[2]/div[1]/div/div/button').click()
             driver.find_element(
                 By.XPATH, '/html/body/div[2]/div/div/div[' + str(item)+']').click()
-            fecha_inicio = string_to_date(fechas[k])
-            fecha_fin = string_to_date(fechas[k+1])
+            fecha_inicio = string_to_date(fechas_l[k])
+            fecha_fin = string_to_date(fechas_v[k])
             wdw(driver, 10).until(EC.presence_of_element_located(
                 (By.XPATH, '//*[@id="start-date-field"]')))
             time.sleep(2)
@@ -250,9 +297,9 @@ def run_script():
                         By.XPATH, '//*[@id="start-date-field"]').send_keys(Keys.BACKSPACE)
                 except:
                     print("error")
-                    
+
             driver.find_element(
-                By.XPATH, '//*[@id="start-date-field"]').send_keys(str(fechas[k]))
+                By.XPATH, '//*[@id="start-date-field"]').send_keys(str(fechas_l[k]))
 
             wdw(driver, 10).until(EC.presence_of_element_located(
                 (By.XPATH, '//*[@id="end-date-field"]')))
@@ -261,7 +308,7 @@ def run_script():
                     By.XPATH, '//*[@id="end-date-field"]').send_keys(Keys.BACKSPACE)
 
             driver.find_element(
-                By.XPATH, '//*[@id="end-date-field"]').send_keys(str(fechas[k+1]))
+                By.XPATH, '//*[@id="end-date-field"]').send_keys(str(fechas_v[k]))
 
             # cargar fechas
             wdw(driver, 10).until(EC.presence_of_element_located(
@@ -275,7 +322,8 @@ def run_script():
                 (By.XPATH, '//*[@id="class-shell"]/div/div[2]/div[3]/div[2]/div[3]/div/div/div/div'))).text
             tab = table.split("\n")
             columnas = [tab[0], tab[1], tab[2], tab[3]]
-            columnas_df = ['escuela','curso','fecha_script','fecha_inicio','fecha_fin','numero_semana',tab[0], tab[1], tab[2], tab[3]]
+            columnas_df = ['escuela', 'curso', 'fecha_script', 'fecha_inicio',
+                           'fecha_fin', 'numero_semana', tab[0], tab[1], tab[2], tab[3]]
             df_estudiantes = pd.DataFrame(columns=columnas_df)
             df4 = pd.DataFrame(columns=columnas)
             output = [tab[i:i + 4] for i in range(4, len(tab), 4)]
@@ -284,17 +332,14 @@ def run_script():
             if verification(output):
                 for j in range(0, len(output)):
                     df4.loc[j] = output[j]
-                    print("output", output[j])
-                    output_aux[j].insert(0,escuela)
-                    output_aux[j].insert(1,curso)
-                    output_aux[j].insert(2,fecha)
-                    output_aux[j].insert(3,fecha_inicio)
-                    output_aux[j].insert(4,fecha_fin)
-                    output_aux[j].insert(5,last_week_number() + 1)
-                print("output_aux", output_aux)
+                    output_aux[j].insert(0, escuela)
+                    output_aux[j].insert(1, curso)
+                    output_aux[j].insert(2, fecha)
+                    output_aux[j].insert(3, fecha_inicio)
+                    output_aux[j].insert(4, fecha_fin)
+                    output_aux[j].insert(5, k+lwn+1)
                 for j in range(0, len(output_aux)):
                     df_estudiantes.loc[j] = output_aux[j]
-                print("df_est",df_estudiantes)
                 sendStudentData(df_estudiantes)
                 sumaMinutos = df4['TOTAL DE MINUTOS DE APRENDIZAJE'].astype(
                     int).sum()
@@ -303,15 +348,17 @@ def run_script():
                 sumaSkills = df4['HABILIDADES MEJORADAS'].astype(int).sum()
                 sumaWOProgress = df4['HABILIDADES SIN AVANCE'].astype(
                     int).sum()
-                
-                time.sleep(2)
             else:
                 sumaMinutos = 0
                 sumaSkills = 0
                 sumaWOProgress = 0
             df = df.append({'codigo_escuela': escuela_y_curso, 'numero_estudiantes': countNonzeros(df4['TOTAL DE MINUTOS DE APRENDIZAJE']), 'fecha_script': fecha, 'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin, 'numero_semana': k +
-                           last_week_number() + 1, 'suma_minutos': sumaMinutos, 'skills_mejoradas': sumaSkills, 'suma_skill_sin_avance': sumaWOProgress, 'maximo_ejercicios': maxEjercicio, 'maximo_skills': maxSkills}, ignore_index=True)
-
-    sendData(df)
+                           lwn + 1, 'suma_minutos': sumaMinutos, 'skills_mejoradas': sumaSkills, 'suma_skill_sin_avance': sumaWOProgress, 'maximo_ejercicios': maxEjercicio, 'maximo_skills': maxSkills}, ignore_index=True)
+            df_actual = df_actual.append({'codigo_escuela': escuela_y_curso, 'numero_estudiantes': countNonzeros(df4['TOTAL DE MINUTOS DE APRENDIZAJE']), 'fecha_script': fecha, 'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin, 'numero_semana': k + lwn +
+                                          + 1, 'suma_minutos': sumaMinutos, 'skills_mejoradas': sumaSkills, 'suma_skill_sin_avance': sumaWOProgress, 'maximo_ejercicios': maxEjercicio, 'maximo_skills': maxSkills}, ignore_index=True)
+        sendData(df_actual)
+        print("se terminó de enviar:", codigo_escuela)
     df.to_excel('datos/output_'+str(date.today())+'.xlsx')
+
+    print("Script terminado, tenga buen día")
     driver.close()
