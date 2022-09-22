@@ -236,7 +236,7 @@ def local_driver():
 
 def run_script():
 
-    driver = local_driver()
+    driver = browserStack_driver()
     driver.maximize_window()
     lwn = last_week_number()
 
